@@ -1,7 +1,7 @@
 import { IRunner, reporters } from 'mocha';
 import moment = require('moment');
 import { titleToCaseIds } from '../lib/shared';
-import { TestRails } from '../lib2/TestRail';
+import { TestRails } from './TestRail';
 import { TestRailResult, Status } from '../lib/testrail.interface';
 import { AddRunPayload } from './TestRailsInterfaces';
 import { ReporterOptionsInterface } from './MochaReportInterface';

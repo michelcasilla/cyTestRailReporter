@@ -24,6 +24,7 @@
   },
   "scripts": {
     "tsc": "tsc",
+    "tsc:watch": "tsc --watch",
     "clean": "rimraf dist",
     "build": "npm run clean && npm run tsc"
   },
@@ -32,7 +33,7 @@
     "btoa": "^1.1.2",
     "chalk": "^2.4.1",
     "mocha": "^9.1.2",
-    "moment": "^2.22.1"
+    "moment": "^2.29.4"
   },
   "devDependencies": {
     "@types/chai": "^3.4.34",

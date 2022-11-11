@@ -134,6 +134,7 @@ var TestRail = /** @class */ (function () {
             .catch(function (error) { return console.error(error); });
     };
     TestRail.prototype.closeRun = function () {
+        var _this = this;
         axios({
             method: 'post',
             url: this.base + "/close_run/" + this.runId,
@@ -143,8 +144,31 @@ var TestRail = /** @class */ (function () {
                 password: this.options.password,
             },
         })
-            .then(function () { return console.log('- Test run closed successfully'); })
+            .then(function () { return _this.log('- Test run closed successfully'); })
             .catch(function (error) { return console.error(error); });
+    };
+    TestRail.prototype.__call = function (url, method, data) {
+        if (method === void 0) { method = "GET"; }
+        return axios({
+            method: method,
+            url: url,
+            headers: { 'Content-Type': 'application/json' },
+            auth: {
+                username: this.options.username,
+                password: this.options.password,
+            },
+        });
+    };
+    TestRail.prototype.log = function (msg, state) {
+        if (state === void 0) { state = 'none'; }
+        var color = chalk.white;
+        if (state === "pass") {
+            color = chalk.green;
+        }
+        else if (state === "failed") {
+            color = chalk.red;
+        }
+        console.log(color(msg));
     };
     return TestRail;
 }());

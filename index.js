@@ -1,1 +1,1 @@
-module.exports = require('./dist/cy-tr-reporter').CyTrReporter;
+module.exports = require('./dist/lib2/testRailReporter').TestRailReporter;

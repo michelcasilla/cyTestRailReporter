@@ -106,7 +106,30 @@ export class TestRail {
         password: this.options.password,
       },
     })
-      .then(() => console.log('- Test run closed successfully'))
+      .then(() =>this.log('- Test run closed successfully'))
       .catch((error) => console.error(error));
   }
+
+  private __call(url: string,  method = "GET", data?: any){
+    return axios({
+      method: method,
+      url: url,
+      headers: { 'Content-Type': 'application/json' },
+      auth: {
+        username: this.options.username,
+        password: this.options.password,
+      },
+    })
+  }
+
+  private log(msg: string, state: 'pass' | 'failed' | 'none' = 'none'): void{
+    let color = chalk.white;
+    if(state === "pass"){
+      color = chalk.green
+    }else if(state === "failed"){
+      color = chalk.red;
+    }
+    console.log(color(msg));
+  }
+  
 }

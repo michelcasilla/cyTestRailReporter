@@ -44,12 +44,10 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var axios_1 = require("axios");
-var axios_form_data_1 = require("axios-form-data");
+// import axiosFormData from 'axios-form-data';
 var chalk_1 = require("chalk");
 var FormData = require('form-data');
-var fs = require('fs/promises');
-var dirname = require('path').dirname;
-var appDir = dirname(require.main.filename);
+var fs = require('fs');
 var TestRailsInterfaces_1 = require("./TestRailsInterfaces");
 var TestRails = /** @class */ (function () {
     function TestRails(auth, runId, host) {
@@ -223,6 +221,7 @@ var TestRails = /** @class */ (function () {
         return this.__call(requestConfg);
     };
     TestRails.prototype.addResult = function (testId, result) {
+        console.log(chalk_1.default.green("Sending result for " + testId));
         var requestConfg = __assign({}, this.conf);
         requestConfg.method = "POST";
         requestConfg.url = this.host + "/add_result/" + testId;
@@ -231,31 +230,22 @@ var TestRails = /** @class */ (function () {
     };
     TestRails.prototype.addAttachmentResult = function (testId, file) {
         return __awaiter(this, void 0, void 0, function () {
-            var requestConfg, image, name, form;
+            var name, form;
             return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0:
-                        axios_1.default.interceptors.request.use(axios_form_data_1.default);
-                        requestConfg = __assign({}, this.conf);
-                        // Read image from disk as a Buffer
-                        file = '/Users/michel.casilla/Documents/MCT/A-SCENDTestRailReporter/cypress/videos/todo.cy.js.mp4';
-                        return [4 /*yield*/, fs.readFile(file)];
-                    case 1:
-                        image = _a.sent();
-                        name = file.split('/').slice(-1);
-                        form = new FormData();
-                        form.append('attachment', image, name);
-                        return [2 /*return*/, axios_1.default.post(this.host + "/add_attachment_to_result/" + testId, form, {
-                                headers: {
-                                    'Content-Type': 'multipart/form-data'
-                                },
-                                auth: this.conf.auth
-                            }).then(function (response) {
-                                console.log(chalk_1.default.green(JSON.stringify(response)));
-                            }).catch(function (error) {
-                                console.error(error);
-                            })];
-                }
+                file = '/Users/michel.casilla/Documents/MCT/A-SCENDTestRailReporter/reporters/testrail/README.md';
+                name = file.split('/').slice(-1);
+                console.log(chalk_1.default.green("Sending attachment " + name + " for " + testId));
+                form = new FormData();
+                form.append('attachment', fs.createReadStream(file), name);
+                console.log(chalk_1.default.gray(this.host + "/add_attachment_to_result/" + testId));
+                return [2 /*return*/, axios_1.default.post(this.host + "/add_attachment_to_result/" + testId, form, {
+                        headers: __assign({}, form.getHeaders()),
+                        auth: this.conf.auth
+                    }).then(function (response) {
+                        console.log(chalk_1.default.green('File uploaded: ' + JSON.stringify(response.data)));
+                    }).catch(function (error) {
+                        console.error(error);
+                    })];
             });
         });
     };
@@ -331,7 +321,7 @@ var TestRails = /** @class */ (function () {
     };
     TestRails.prototype.reportCollected = function () {
         return __awaiter(this, void 0, void 0, function () {
-            var fail, totalS, status, stepResults, comment, report, _i, _a, tagId;
+            var fail, totalS, status, stepResults, comment, report, _i, _a, tagId, result;
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
@@ -354,8 +344,8 @@ var TestRails = /** @class */ (function () {
                         tagId = _a[_i];
                         return [4 /*yield*/, this.addResult(tagId, report)];
                     case 2:
-                        _b.sent();
-                        return [4 /*yield*/, this.addAttachmentResult(tagId, '/fixtures/todo.cy.js.mp4')];
+                        result = _b.sent();
+                        return [4 /*yield*/, this.addAttachmentResult(result.id, '/fixtures/todo.cy.js.mp4')];
                     case 3:
                         _b.sent();
                         _b.label = 4;
@@ -376,6 +366,7 @@ var TestRails = /** @class */ (function () {
         return (minutes + seconds > 0) ? minutes + "M " + seconds.toFixed(0) + "S" : "1S";
     };
     TestRails.prototype.collect = function (test) {
+        console.log(chalk_1.default.gray("Collecting " + test.title));
         var report = this.getReportFromTest(test);
         if (report) {
             this.currentTagID = report.tagId;
@@ -523,6 +514,7 @@ var TestRails = /** @class */ (function () {
     };
     TestRails.prototype.__call = function (requestConfg) {
         return new Promise(function (resolve, reject) {
+            console.log(chalk_1.default.gray(requestConfg.url));
             axios_1.default({
                 method: requestConfg.method,
                 url: requestConfg.url,
@@ -534,9 +526,11 @@ var TestRails = /** @class */ (function () {
                 data: requestConfg.body
             })
                 .then(function (response) {
+                console.log(chalk_1.default.green('--- Sucess'));
                 resolve(response.data);
             })
                 .catch(function (error) {
+                console.log(chalk_1.default.red('--- Fail'));
                 reject(error);
             });
         });

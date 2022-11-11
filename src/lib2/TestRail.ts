@@ -1,12 +1,8 @@
 import axios, { Method } from "axios";
-import axiosFormData from 'axios-form-data';
+// import axiosFormData from 'axios-form-data';
 import chalk from "chalk";
-import { auth } from "firebase-admin";
-import { exit } from "process";
 const FormData = require('form-data');
-const fs = require('fs/promises');
-const { dirname } = require('path');
-const appDir = dirname(require.main.filename);
+const fs = require('fs');
 import {
   AddRunPayload,
   ascendUnknown,
@@ -209,6 +205,7 @@ export class TestRails {
   }
 
   addResult(testId: number, result: TestRailAddResult): Promise<any> {
+    console.log(chalk.green(`Sending result for ${testId}`));
     const requestConfg = { ...this.conf };
     requestConfg.method = "POST";
     requestConfg.url = `${this.host}/add_result/${testId}`;
@@ -217,25 +214,22 @@ export class TestRails {
   }
   
   async addAttachmentResult(testId: number, file: string): Promise<any> {
-  
-    axios.interceptors.request.use(axiosFormData);
-    const requestConfg = { ...this.conf };
-    // Read image from disk as a Buffer
-    file = '/Users/michel.casilla/Documents/MCT/A-SCENDTestRailReporter/cypress/videos/todo.cy.js.mp4';
-    const image = await fs.readFile(file);
+    
+    file = '/Users/michel.casilla/Documents/MCT/A-SCENDTestRailReporter/reporters/testrail/README.md';
     const name = file.split('/').slice(-1);
+    console.log(chalk.green(`Sending attachment ${name} for ${testId}`));
 
     // Create a form and append image with additional fields
     const form = new FormData();
-    form.append('attachment', image, name);
-    
+    form.append('attachment', fs.createReadStream(file), name);
+    console.log(chalk.gray(`${this.host}/add_attachment_to_result/${testId}`));
     return axios.post(`${this.host}/add_attachment_to_result/${testId}`, form, {
       headers: { 
-        'Content-Type': 'multipart/form-data' 
+        ...form.getHeaders()
       },
       auth: this.conf.auth
     } ).then((response) => {
-      console.log(chalk.green(JSON.stringify(response)));
+      console.log(chalk.green('File uploaded: '+JSON.stringify(response.data)));
     }).catch((error) => {
       console.error(error);
     });
@@ -317,8 +311,8 @@ export class TestRails {
       "custom_resultsvideo": TestRails.customVideoResult,
     };
     for (const tagId of this.tagIds) {
-      await this.addResult(tagId, report);
-      await this.addAttachmentResult(tagId, '/fixtures/todo.cy.js.mp4');
+      const result = await this.addResult(tagId, report);
+      await this.addAttachmentResult(result.id, '/fixtures/todo.cy.js.mp4');
     }
   }
 
@@ -335,6 +329,7 @@ export class TestRails {
   }
 
   collect(test: any): void {
+    console.log(chalk.gray(`Collecting ${test.title}`));
     const report = this.getReportFromTest(test);
     if (report) {
       this.currentTagID = report.tagId;
@@ -477,6 +472,7 @@ export class TestRails {
 
   private __call<T>(requestConfg: TestRailConfig): Promise<T> {
     return new Promise((resolve, reject)=>{
+      console.log(chalk.gray(requestConfg.url));
       axios({
         method: requestConfg.method as Method,
         url: requestConfg.url,
@@ -488,9 +484,11 @@ export class TestRails {
         data: requestConfg.body
       })
       .then((response) => {
+        console.log(chalk.green('--- Sucess'));
         resolve(response.data)
       })
       .catch((error) => {
+        console.log(chalk.red('--- Fail'));
         reject(error)
       });
     })
